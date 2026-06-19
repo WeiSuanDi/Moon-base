@@ -1,0 +1,23 @@
+# Secrets & local env
+.env.local
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Vercel
+.vercel
+
+# Playwright test artifacts
+.playwright-mcp/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
