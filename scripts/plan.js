@@ -13,17 +13,18 @@ import {
   isDecisionComplete,
   getCompletedSteps
 } from './state.js';
-import { initMoon, highlightSite, bases } from './moon-render.js';
+import { bases } from './moon-render.js';
 import { askAgent, generateSummary, compareBases, generateStory, generatePoster, suggestNext } from './agent-client.js';
 
 // DOM refs
 const infoPanel = document.getElementById('info-panel');
+const siteInfoContent = document.getElementById('site-info-content');
 const infoSubtitle = document.getElementById('info-subtitle');
 const infoTitle = document.getElementById('info-title');
 const infoDesc = document.getElementById('info-desc');
 const infoStats = document.getElementById('info-stats');
 const infoActions = document.getElementById('info-actions');
-const infoClose = document.getElementById('info-close');
+const noSiteEl = document.getElementById('no-site');
 
 const gamePanel = document.getElementById('game-panel');
 const gameSiteTag = document.getElementById('game-site-tag');
@@ -50,19 +51,28 @@ const chatChips = document.getElementById('chat-chips');
 let isGenerating = false;
 
 function init() {
-  initMoon();
+  resolveSiteFromUrl();
   bindEvents();
   bindAgentActions();
   subscribe(render);
-  render(getState());
+  const state = getState();
+  render(state);
+  if (state.site) {
+    const base = bases.find(b => b.id === state.site);
+    if (base) showBaseInfo(base);
+  }
+}
+
+// 优先使用 URL 参数中的选址；其次保留已有 state；否则提示返回首页
+function resolveSiteFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const siteFromUrl = params.get('site');
+  if (siteFromUrl && siteMeta[siteFromUrl]) {
+    setSite(siteFromUrl);
+  }
 }
 
 function bindEvents() {
-  window.addEventListener('marker-click', e => {
-    showBaseInfo(e.detail);
-  });
-
-  infoClose.addEventListener('click', hideBaseInfo);
   resultClose.addEventListener('click', hideResult);
   resultReset.addEventListener('click', () => {
     hideResult();
@@ -111,34 +121,26 @@ function showBaseInfo(base) {
   if (base.selectable) {
     const btn = document.createElement('button');
     btn.className = 'btn btn-primary';
-    btn.textContent = '选为基地选址';
+    btn.textContent = '重新推演该基地';
     btn.addEventListener('click', () => {
       setSite(base.id);
-      hideBaseInfo();
     });
     infoActions.appendChild(btn);
   }
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'btn btn-secondary';
-  closeBtn.textContent = '关闭';
-  closeBtn.addEventListener('click', hideBaseInfo);
-  infoActions.appendChild(closeBtn);
-
-  infoPanel.classList.add('visible');
-}
-
-function hideBaseInfo() {
-  infoPanel.classList.remove('visible');
 }
 
 function render(state) {
-  highlightSite(state.site);
+  const hasSite = !!state.site;
 
-  if (state.site) {
+  if (hasSite) {
     gamePanel.classList.remove('hidden');
+    if (siteInfoContent) siteInfoContent.style.display = '';
+    if (noSiteEl) noSiteEl.style.display = 'none';
     renderGamePanel(state);
   } else {
     gamePanel.classList.add('hidden');
+    if (siteInfoContent) siteInfoContent.style.display = 'none';
+    if (noSiteEl) noSiteEl.style.display = 'block';
   }
 
   const metrics = computeMetrics(state);
@@ -152,7 +154,7 @@ function render(state) {
   const complete = isDecisionComplete(state);
   generateBtn.style.display = complete ? 'block' : 'none';
   if (agentActions) agentActions.style.display = complete ? 'grid' : 'none';
-  if (suggestBtn) suggestBtn.style.display = state.site && !complete ? 'inline-flex' : 'none';
+  if (suggestBtn) suggestBtn.style.display = hasSite && !complete ? 'inline-flex' : 'none';
 }
 
 function renderGamePanel(state) {
