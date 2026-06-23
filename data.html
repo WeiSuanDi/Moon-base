@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>环境数据 | WEISUANDI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body class="page-data">
+
+  <nav>
+    <a href="index.html" class="logo">WEISUANDI</a>
+    <ul class="nav-links">
+      <li><a href="index.html">返回首页</a></li>
+      <li><a href="menu.html">基地导览</a></li>
+      <li><a href="plan.html">沙盘推演</a></li>
+    </ul>
+  </nav>
+
+  <section id="data">
+    <h2 class="section-title">月球<span>环境数据</span></h2>
+    <p class="section-subtitle">实时模拟月球表面环境参数的微小波动</p>
+    <div class="data-grid">
+      <div class="stat-box">
+        <div class="stat-label">表面温度</div>
+        <div class="stat-value"><span class="stat-number" data-base="-130" data-step="0.3">-130</span><span class="stat-unit">°C</span></div>
+        <div class="stat-fluctuate" data-fluctuate></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">重力加速度</div>
+        <div class="stat-value"><span class="stat-number" data-base="1.62" data-step="0.001">1.62</span><span class="stat-unit">m/s²</span></div>
+        <div class="stat-fluctuate" data-fluctuate></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">辐射剂量</div>
+        <div class="stat-value"><span class="stat-number" data-base="0.5" data-step="0.01">0.5</span><span class="stat-unit">mSv/d</span></div>
+        <div class="stat-fluctuate" data-fluctuate></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">月昼长度</div>
+        <div class="stat-value"><span class="stat-number" data-base="14.75" data-step="0">14.75</span><span class="stat-unit">地球日</span></div>
+        <div class="stat-fluctuate" data-fluctuate></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 WEISUANDI · weisuandi.com · 月球基地畅想项目</p>
+  </footer>
+
+  <script>
+    (function() {
+      const statNumbers = document.querySelectorAll('.stat-number');
+      const statFluctuates = document.querySelectorAll('[data-fluctuate]');
+
+      function updateStats() {
+        statNumbers.forEach((el, idx) => {
+          const base = parseFloat(el.dataset.base);
+          const step = parseFloat(el.dataset.step);
+          if (step === 0) {
+            statFluctuates[idx].textContent = '稳定周期';
+            return;
+          }
+          const change = (Math.random() - 0.5) * step * 2;
+          const value = base + change;
+          el.textContent = value.toFixed(value < 10 && step < 0.1 ? 3 : 1);
+          const sign = change >= 0 ? '+' : '';
+          statFluctuates[idx].textContent = `${sign}${change.toFixed(step < 0.01 ? 4 : 2)} 实时波动`;
+        });
+      }
+
+      setInterval(updateStats, 2000);
+      updateStats();
+    })();
+  </script>
+</body>
+</html>
