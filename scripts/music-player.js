@@ -1,10 +1,10 @@
-// 背景音乐播放器：支持跨页面播放状态记忆与播放/暂停切换
+// 背景音乐播放器：进入网站自动播放；用户手动暂停后，本次会话内刷新保持暂停；关闭网页后再打开恢复自动播放
 (function () {
   "use strict";
 
   const MUSIC_SRC =
     "music/CrooMin%20-%20-%20%E5%8E%9F%E9%87%8E%E8%BF%BD%E9%80%90(Cornfield%C2%A0Chase).mp3";
-  const STORAGE_KEY = "moon-base-music-playing";
+  const SESSION_PAUSED_KEY = "moon-music-paused";
 
   // 避免重复初始化
   if (window.__moonMusicPlayer) return;
@@ -43,17 +43,18 @@
     btn.classList.toggle("playing", isPlaying());
   }
 
-  function setPlayingState(playing) {
+  function setSessionPaused(paused) {
     try {
-      localStorage.setItem(STORAGE_KEY, playing ? "1" : "0");
+      if (paused) sessionStorage.setItem(SESSION_PAUSED_KEY, "1");
+      else sessionStorage.removeItem(SESSION_PAUSED_KEY);
     } catch (e) {
-      // 忽略隐私模式下的 localStorage 异常
+      // 忽略隐私模式下的 sessionStorage 异常
     }
   }
 
-  function getStoredState() {
+  function isSessionPaused() {
     try {
-      return localStorage.getItem(STORAGE_KEY) === "1";
+      return sessionStorage.getItem(SESSION_PAUSED_KEY) === "1";
     } catch (e) {
       return false;
     }
@@ -62,53 +63,49 @@
   async function play() {
     try {
       await audio.play();
-      setPlayingState(true);
     } catch (err) {
-      // 浏览器自动播放策略阻止时，保持暂停状态
+      // 浏览器自动播放策略阻止时，保持当前 UI 状态
     }
     updateIcon();
   }
 
   function pause() {
     audio.pause();
-    setPlayingState(false);
     updateIcon();
   }
 
   btn.addEventListener("click", () => {
     if (isPlaying()) {
+      setSessionPaused(true);
       pause();
     } else {
+      setSessionPaused(false);
       play();
     }
   });
 
   audio.addEventListener("play", updateIcon);
   audio.addEventListener("pause", updateIcon);
-  audio.addEventListener("ended", () => {
-    setPlayingState(false);
-    updateIcon();
-  });
+  audio.addEventListener("ended", updateIcon);
 
-  // 页面加载时根据记忆状态尝试播放
+  // 页面加载时：本次会话未被手动暂停则自动播放
   function initPlayback() {
     updateIcon();
-    if (getStoredState()) {
+    if (!isSessionPaused()) {
       play();
     }
   }
 
-  // 如果页面已经允许音频上下文（非首屏），直接尝试；否则等待首次用户交互
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initPlayback);
   } else {
     initPlayback();
   }
 
-  // 首次用户交互时补播，解决浏览器的自动播放限制（排除音乐按钮本身）
+  // 首次用户交互时补播，解决浏览器的自动播放限制（排除音乐按钮本身；若用户已手动暂停则不补播）
   const resumeOnInteraction = (e) => {
     if (e && (e.target === btn || btn.contains(e.target))) return;
-    if (getStoredState() && !isPlaying()) {
+    if (!isSessionPaused() && !isPlaying()) {
       play();
     }
   };
