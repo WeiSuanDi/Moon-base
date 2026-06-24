@@ -11,7 +11,7 @@
 
 [🚀 Live Demo](https://weisuandi.com) · [📖 Architecture Docs](./AIcoding/项目架构分析.md) · [🎮 Start Simulation](./plan.html)
 
-<img src="./moon-base-initial.png" alt="Moon Base Homepage" width="85%" style="border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+<img src="./moonbase-initial.png" alt="Moon Base Homepage" width="85%" style="border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
 
 </div>
 
@@ -38,10 +38,10 @@ Click a site to start the **sandbox simulation**: choose energy, water, and radi
 
 | Step | Screenshot | Description |
 |------|------------|-------------|
-| **① Gaze at the Moon** | <img src="./moon-base-initial.png" width="280"> | A rotatable, zoomable 3D Moon with hoverable markers |
-| **② Pick a Site** | <img src="./moon-base-info-panel.png" width="280"> | Click a marker to see its traits and confirm your choice |
-| **③ Sandbox Simulation** | <img src="./moon-base-game-panel.png" width="280"> | Three-step decisions: Energy → Water → Radiation Shielding |
-| **④ View Results** | <img src="./moon-base-complete.png" width="280"> | Real-time metrics panel + AI feasibility report |
+| **① Gaze at the Moon** | <img src="./moonbase-initial.png" width="280"> | A rotatable, zoomable 3D Moon with hoverable markers |
+| **② Pick a Site** | <img src="./moonbase-info-panel.png" width="280"> | Click a marker to see its traits and confirm your choice |
+| **③ Sandbox Simulation** | <img src="./moonbase-game-panel.png" width="280"> | Three-step decisions: Energy → Water → Radiation Shielding |
+| **④ View Results** | <img src="./moonbase-complete.png" width="280"> | Real-time metrics panel + AI feasibility report |
 
 ---
 
@@ -90,8 +90,8 @@ The backend is **completely stateless**: the Serverless Function keeps no sessio
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/yourname/moon-base.git
-cd moon-base
+git clone https://github.com/yourname/moonbase.git
+cd moonbase
 
 # 2. Install Python dependencies (for the local AI backend)
 pip install -r requirements.txt
@@ -114,7 +114,7 @@ uvicorn api.main:app --reload --port 8000
 ## 📁 Project Structure
 
 ```
-moon-base/
+moonbase/
 ├── index.html              # Homepage + 3D Moon
 ├── menu.html               # Base tour / navigation
 ├── plan.html               # Main sandbox simulation page
@@ -168,8 +168,8 @@ moon-base/
 
 <div align="center">
 
-<img src="./moon-base-info-panel.png" width="45%" style="border-radius: 12px;">
-<img src="./moon-base-game-panel.png" width="45%" style="border-radius: 12px;">
+<img src="./moonbase-info-panel.png" width="45%" style="border-radius: 12px;">
+<img src="./moonbase-game-panel.png" width="45%" style="border-radius: 12px;">
 
 <img src="./modules-check.png" width="45%" style="border-radius: 12px;">
 <img src="./plan-layout-check.png" width="45%" style="border-radius: 12px;">

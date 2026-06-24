@@ -11,7 +11,7 @@
 
 [🚀 在线体验](https://weisuandi.com) · [📖 项目文档](./AIcoding/项目架构分析.md) · [🎮 开始推演](./plan.html)
 
-<img src="./moon-base-initial.png" alt="月球基地首页" width="85%" style="border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+<img src="./moonbase-initial.png" alt="月球基地首页" width="85%" style="border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
 
 </div>
 
@@ -38,10 +38,10 @@
 
 | 步骤 | 画面 | 说明 |
 |------|------|------|
-| **① 仰望月球** | <img src="./moon-base-initial.png" width="280"> | 可旋转、缩放、悬停查看标记的 3D 月球 |
-| **② 选址决策** | <img src="./moon-base-info-panel.png" width="280"> | 点击标记，查看基地特点并确认选址 |
-| **③ 沙盘推演** | <img src="./moon-base-game-panel.png" width="280"> | 能源 → 水源 → 辐射防护，三步决策 |
-| **④ 查看结果** | <img src="./moon-base-complete.png" width="280"> | 实时指标面板 + AI 可行性简报 |
+| **① 仰望月球** | <img src="./moonbase-initial.png" width="280"> | 可旋转、缩放、悬停查看标记的 3D 月球 |
+| **② 选址决策** | <img src="./moonbase-info-panel.png" width="280"> | 点击标记，查看基地特点并确认选址 |
+| **③ 沙盘推演** | <img src="./moonbase-game-panel.png" width="280"> | 能源 → 水源 → 辐射防护，三步决策 |
+| **④ 查看结果** | <img src="./moonbase-complete.png" width="280"> | 实时指标面板 + AI 可行性简报 |
 
 ---
 
@@ -90,8 +90,8 @@
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/yourname/moon-base.git
-cd moon-base
+git clone https://github.com/yourname/moonbase.git
+cd moonbase
 
 # 2. 安装 Python 依赖（用于本地 AI 后端）
 pip install -r requirements.txt
@@ -114,7 +114,7 @@ uvicorn api.main:app --reload --port 8000
 ## 📁 项目结构
 
 ```
-moon-base/
+moonbase/
 ├── index.html              # 首页 + 3D 月球
 ├── menu.html               # 基地导览
 ├── plan.html               # 沙盘推演主页面
@@ -168,8 +168,8 @@ moon-base/
 
 <div align="center">
 
-<img src="./moon-base-info-panel.png" width="45%" style="border-radius: 12px;">
-<img src="./moon-base-game-panel.png" width="45%" style="border-radius: 12px;">
+<img src="./moonbase-info-panel.png" width="45%" style="border-radius: 12px;">
+<img src="./moonbase-game-panel.png" width="45%" style="border-radius: 12px;">
 
 <img src="./modules-check.png" width="45%" style="border-radius: 12px;">
 <img src="./plan-layout-check.png" width="45%" style="border-radius: 12px;">
