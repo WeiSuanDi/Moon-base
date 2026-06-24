@@ -17,8 +17,8 @@ import { bases, highlightSite } from './moon-render.js';
 import { askAgent, generateSummary, compareBases, generateStory, generatePoster, suggestNext } from './agent-client.js';
 
 // DOM refs（每次 init 时重新查询）
-let infoPanel, siteInfoContent, infoSubtitle, infoTitle, infoDesc, infoStats, infoActions, noSiteEl;
-let gamePanel, gameSiteTag, decisionList, statsBoard, generateBtn, agentActions, suggestBtn;
+let infoPanel, siteInfoContent, infoSubtitle, infoTitle, infoTags, infoDesc, infoStats, infoActions, noSiteEl;
+let progressPipeline, gamePanel, gameSiteTag, decisionList, statsBoard, generateBtn, agentActions, suggestBtn;
 let resultPanel, resultTitle, resultBody, resultClose, resultReset;
 let agentFab, agentChat, chatClose, chatMessages, chatInput, chatSend, chatChips;
 
@@ -30,11 +30,13 @@ function queryDom() {
   siteInfoContent = document.getElementById('site-info-content');
   infoSubtitle = document.getElementById('info-subtitle');
   infoTitle = document.getElementById('info-title');
+  infoTags = document.getElementById('info-tags');
   infoDesc = document.getElementById('info-desc');
   infoStats = document.getElementById('info-stats');
   infoActions = document.getElementById('info-actions');
   noSiteEl = document.getElementById('no-site');
 
+  progressPipeline = document.getElementById('progress-pipeline');
   gamePanel = document.getElementById('game-panel');
   gameSiteTag = document.getElementById('game-site-tag');
   decisionList = document.getElementById('decision-list');
@@ -170,6 +172,14 @@ function showBaseInfo(base) {
   infoSubtitle.textContent = base.subtitle;
   infoTitle.textContent = base.name;
   infoDesc.textContent = base.desc;
+
+  // Render tags
+  if (infoTags && meta?.tags) {
+    infoTags.innerHTML = meta.tags.map(t => `<span class="info-tag">${t}</span>`).join('');
+  } else if (infoTags) {
+    infoTags.innerHTML = '';
+  }
+
   infoStats.innerHTML = `
     <div class="info-stat"><div class="info-stat-value">${base.altitude}</div><div class="info-stat-label">海拔</div></div>
     <div class="info-stat"><div class="info-stat-value">${base.lat}°</div><div class="info-stat-label">纬度</div></div>
@@ -200,10 +210,12 @@ function render(state) {
     if (siteInfoContent) siteInfoContent.style.display = '';
     if (noSiteEl) noSiteEl.style.display = 'none';
     renderGamePanel(state);
+    renderProgressPipeline(state);
   } else {
     gamePanel.classList.add('hidden');
     if (siteInfoContent) siteInfoContent.style.display = 'none';
     if (noSiteEl) noSiteEl.style.display = 'block';
+    renderProgressPipeline(state);
   }
 
   const metrics = computeMetrics(state);
@@ -234,7 +246,7 @@ function renderGamePanel(state) {
     const isActive = isUnlocked && !isDone;
 
     const card = document.createElement('div');
-    card.className = `decision-card ${isActive ? 'active' : ''} ${!isUnlocked ? 'locked' : ''}`;
+    card.className = `decision-card ${isActive ? 'active' : ''} ${isDone ? 'done' : ''} ${!isUnlocked ? 'locked' : ''}`;
 
     const statusText = isDone ? '已选择' : isUnlocked ? '待决策' : '需先完成上一步';
     const statusClass = isDone ? 'done' : '';
@@ -263,25 +275,123 @@ function renderGamePanel(state) {
   });
 }
 
+function renderProgressPipeline(state) {
+  if (!progressPipeline) return;
+  const hasSite = !!state.site;
+  const stepIcons = { energy: '⚡', water: '💧', radiation: '🛡️', communication: '📡', habitat: '🌱', transport: '🚀' };
+  const stepLabels = { energy: '能源', water: '水源', radiation: '防护', communication: '通信', habitat: '生命', transport: '运输' };
+
+  let html = '';
+  steps.forEach((step, i) => {
+    const isDone = !!state[step.key];
+    const prev = steps[i - 1];
+    const isUnlocked = hasSite && (!prev || !!state[prev.key]);
+    const isActive = isUnlocked && !isDone;
+
+    let statusClass = 'locked';
+    if (isDone) statusClass = 'done';
+    else if (isActive) statusClass = 'active';
+
+    const icon = stepIcons[step.key] || '●';
+    const label = stepLabels[step.key] || step.name;
+
+    html += `<div class="pipeline-node ${statusClass}" data-step="${step.key}">
+      <div class="pipeline-dot">${isDone ? '✓' : icon}</div>
+      <span class="pipeline-label">${label}</span>
+    </div>`;
+
+    if (i < steps.length - 1) {
+      let connClass = '';
+      if (isDone) connClass = 'done';
+      else if (isActive) connClass = 'active-half';
+      html += `<div class="pipeline-connector ${connClass}"></div>`;
+    }
+  });
+
+  progressPipeline.innerHTML = html;
+
+  // Click handlers on pipeline nodes
+  progressPipeline.querySelectorAll('.pipeline-node').forEach(node => {
+    node.addEventListener('click', () => {
+      const stepKey = node.dataset.step;
+      if (!stepKey) return;
+      const currentState = getState();
+      const stepIndex = steps.findIndex(s => s.key === stepKey);
+      const prev = steps[stepIndex - 1];
+      const isUnlocked = !!currentState.site && (!prev || !!currentState[prev.key]);
+      if (!isUnlocked) return;
+      // Scroll to the corresponding decision card
+      const card = decisionList?.querySelector(`#options-${stepKey}`)?.closest('.decision-card');
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Brief highlight
+        card.style.boxShadow = '0 0 30px rgba(0,212,255,0.2)';
+        setTimeout(() => { card.style.boxShadow = ''; }, 800);
+      }
+    });
+  });
+}
+
 function renderStats(metrics, state) {
   if (!statsBoard) return;
+  const viabilityClass = metrics.viabilityScore >= 70 ? 'good' : metrics.viabilityScore >= 45 ? 'warn' : 'bad';
   const powerClass = metrics.powerSurplus_kW >= 30 ? 'good' : metrics.powerSurplus_kW >= 0 ? 'warn' : 'bad';
   const radiationClass = metrics.radiation_mSv_y <= 100 ? 'good' : metrics.radiation_mSv_y <= 200 ? 'warn' : 'bad';
   const waterClass = metrics.waterSupply_t_y >= 500 ? 'good' : metrics.waterSupply_t_y >= 200 ? 'warn' : 'bad';
-  const viabilityClass = metrics.viabilityScore >= 70 ? 'good' : metrics.viabilityScore >= 45 ? 'warn' : 'bad';
+  const riskClass = metrics.riskScore <= 6 ? 'good' : metrics.riskScore <= 10 ? 'warn' : 'bad';
+  const sustainClass = metrics.sustainability >= 18 ? 'good' : metrics.sustainability >= 12 ? 'warn' : 'bad';
+
+  // Bar widths (percentage-based on max values)
+  const viabilityPct = metrics.viabilityScore;
+  const powerPct = Math.min(100, Math.max(0, (metrics.powerSurplus_kW + 30) / 130 * 100));
+  const radiationPct = Math.min(100, Math.max(0, (400 - metrics.radiation_mSv_y) / 380 * 100));
+  const waterPct = Math.min(100, Math.max(0, metrics.waterSupply_t_y / 1200 * 100));
+  const commPct = Math.min(100, Math.max(0, metrics.commScore));
+  const foodPct = metrics.foodSelfSufficiency;
+  const transportPct = Math.min(100, Math.max(0, metrics.transportCapacity));
+  const riskPct = Math.min(100, Math.max(0, (18 - metrics.riskScore) / 18 * 100));
+  const sustainPct = Math.min(100, Math.max(0, metrics.sustainability / 30 * 100));
 
   statsBoard.innerHTML = `
-    <h4>当前配置推演</h4>
-    <div class="stat-row"><span class="stat-label">综合可行性</span><span class="stat-value ${viabilityClass}">${metrics.viabilityScore}/100</span></div>
-    <div class="stat-row"><span class="stat-label">能源结余</span><span class="stat-value ${powerClass}">${metrics.powerSurplus_kW > 0 ? '+' : ''}${metrics.powerSurplus_kW} kW</span></div>
-    <div class="stat-row"><span class="stat-label">总部署质量</span><span class="stat-value">${metrics.totalMass_t} t</span></div>
-    <div class="stat-row"><span class="stat-label">年供水量</span><span class="stat-value ${waterClass}">${metrics.waterSupply_t_y} t/年</span></div>
-    <div class="stat-row"><span class="stat-label">舱外年辐射</span><span class="stat-value ${radiationClass}">${metrics.radiation_mSv_y} mSv</span></div>
-    <div class="stat-row"><span class="stat-label">通信评分</span><span class="stat-value">${metrics.commScore}</span></div>
-    <div class="stat-row"><span class="stat-label">食品自给率</span><span class="stat-value">${metrics.foodSelfSufficiency}%</span></div>
-    <div class="stat-row"><span class="stat-label">运输能力</span><span class="stat-value">${metrics.transportCapacity}</span></div>
-    <div class="stat-row"><span class="stat-label">综合风险</span><span class="stat-value ${metrics.riskScore <= 6 ? 'good' : metrics.riskScore <= 10 ? 'warn' : 'bad'}">${metrics.riskScore}/18</span></div>
-    <div class="stat-row"><span class="stat-label">可持续评分</span><span class="stat-value ${metrics.sustainability >= 18 ? 'good' : metrics.sustainability >= 12 ? 'warn' : 'bad'}">${metrics.sustainability}/30</span></div>
+    <h3>📊 实时推演仪表盘</h3>
+
+    <div class="stats-highlight">
+      <div class="highlight-value ${viabilityClass}">${metrics.viabilityScore}<span style="font-size:1rem;">/100</span></div>
+      <div class="highlight-label">综合可行性评分</div>
+    </div>
+
+    <div class="stats-metric-group">
+      <div class="stats-group-title">🛡️ 生存指标</div>
+      ${metricRow('年辐射剂量', metrics.radiation_mSv_y, 'mSv', radiationPct, radiationClass, true)}
+      ${metricRow('年供水量', metrics.waterSupply_t_y, 't/年', waterPct, waterClass, false)}
+      ${metricRow('食品自给率', metrics.foodSelfSufficiency, '%', foodPct, 'good', false)}
+    </div>
+
+    <div class="stats-metric-group">
+      <div class="stats-group-title">⚡ 运营指标</div>
+      ${metricRow('能源结余', metrics.powerSurplus_kW, 'kW', powerPct, powerClass, false)}
+      ${metricRow('通信评分', metrics.commScore, '', commPct, 'good', false)}
+      ${metricRow('运输能力', metrics.transportCapacity, '', transportPct, 'good', false)}
+    </div>
+
+    <div class="stats-metric-group">
+      <div class="stats-group-title">⚠️ 风险指标</div>
+      ${metricRow('综合风险', 18 - metrics.riskScore, '/18', riskPct, riskClass, true)}
+      ${metricRow('可持续评分', metrics.sustainability, '/30', sustainPct, sustainClass, false)}
+      ${metricRow('总部署质量', metrics.totalMass_t, 't', 50, 'good', false)}
+    </div>
+  `;
+}
+
+function metricRow(label, value, unit, pct, cls, lowerBetter) {
+  const displayVal = unit ? `${value} ${unit}` : `${value}`;
+  const barCls = cls || 'good';
+  return `
+    <div class="metric-row">
+      <span class="metric-label">${label}</span>
+      <div class="metric-bar-wrap"><div class="metric-bar-fill ${barCls}" style="width:${pct}%"></div></div>
+      <span class="metric-value ${barCls}">${displayVal}</span>
+    </div>
   `;
 }
 

@@ -29,58 +29,66 @@
   </header>
 
   <main class="plan-main">
-    <div class="plan-left">
-      <!-- Site Info -->
-      <section id="info-panel">
-        <div id="site-info-content">
-          <div class="info-subtitle" id="info-subtitle">基地类型</div>
-          <h2 class="info-title" id="info-title">基地名称</h2>
-          <p class="info-desc" id="info-desc">描述内容</p>
-          <div class="info-stats" id="info-stats"></div>
-          <div class="info-actions" id="info-actions"></div>
-        </div>
-        <div class="no-site" id="no-site" style="display:none;">
-          <p>尚未选择基地，请<a href="index.html">返回首页</a>点击月球表面标记，或从<a href="menu.html">基地导览</a>开始。</p>
-        </div>
-      </section>
+    <!-- Progress Pipeline -->
+    <div class="progress-pipeline" id="progress-pipeline"></div>
 
-      <footer>
-        <p>© 2026 WEISUANDI · weisuandi.com · 月球基地畅想项目</p>
-      </footer>
-    </div>
+    <div class="plan-content">
+      <div class="plan-left">
+        <!-- Site Info -->
+        <section id="info-panel">
+          <div id="site-info-content">
+            <div class="info-subtitle" id="info-subtitle">基地类型</div>
+            <h2 class="info-title" id="info-title">基地名称</h2>
+            <div class="info-tags" id="info-tags"></div>
+            <p class="info-desc" id="info-desc">描述内容</p>
+            <div class="info-stats" id="info-stats"></div>
+            <div class="info-actions" id="info-actions"></div>
+          </div>
+          <div class="no-site" id="no-site" style="display:none;">
+            <p>尚未选择基地，请<a href="index.html">返回首页</a>点击月球表面标记，或从<a href="menu.html">基地导览</a>开始。</p>
+          </div>
+        </section>
 
-    <aside class="plan-right">
-      <!-- Game Panel -->
-      <div id="game-panel">
-        <div class="game-title">基地沙盘推演</div>
-        <div class="game-subtitle">每一步选择都会实时影响配置指标；完成全部 6 步后可解锁 AI 深度产出。</div>
-        <div class="site-tag" id="game-site-tag"><span class="dot"></span> 尚未选址</div>
-        <div class="decision-list" id="decision-list"></div>
-        <div class="stats-board hidden" id="stats-board"></div>
-        <button class="btn btn-ghost" id="suggest-btn" style="display:none; width:100%; margin-top:0.75rem;">
-          <span>✨</span> 让 AI 建议下一步
-        </button>
-        <div class="agent-actions" id="agent-actions" style="display:none;">
-          <button class="agent-action" data-output="summary">
-            <span class="agent-action-icon">📊</span>
-            <span>可行性简报</span>
+        <!-- Decision Cards (moved to left column) -->
+        <div id="game-panel">
+          <div class="game-title">决策面板</div>
+          <div class="game-subtitle">每一步选择都会实时影响配置指标；完成全部 6 步后可解锁 AI 深度产出。</div>
+          <div class="site-tag" id="game-site-tag"><span class="dot"></span> 尚未选址</div>
+          <div class="decision-list" id="decision-list"></div>
+          <button class="btn btn-ghost" id="suggest-btn" style="display:none; width:100%; margin-top:0.75rem;">
+            <span>✨</span> 让 AI 建议下一步
           </button>
-          <button class="agent-action" data-output="compare">
-            <span class="agent-action-icon">⚖️</span>
-            <span>多基地对比</span>
-          </button>
-          <button class="agent-action" data-output="story">
-            <span class="agent-action-icon">📖</span>
-            <span>基地一日</span>
-          </button>
-          <button class="agent-action" data-output="poster">
-            <span class="agent-action-icon">🚀</span>
-            <span>招募海报</span>
-          </button>
+          <div class="agent-actions" id="agent-actions" style="display:none;">
+            <button class="agent-action" data-output="summary">
+              <span class="agent-action-icon">📊</span>
+              <span>可行性简报</span>
+            </button>
+            <button class="agent-action" data-output="compare">
+              <span class="agent-action-icon">⚖️</span>
+              <span>多基地对比</span>
+            </button>
+            <button class="agent-action" data-output="story">
+              <span class="agent-action-icon">📖</span>
+              <span>基地一日</span>
+            </button>
+            <button class="agent-action" data-output="poster">
+              <span class="agent-action-icon">🚀</span>
+              <span>招募海报</span>
+            </button>
+          </div>
+          <button class="btn btn-primary" id="generate-summary-btn" style="display:none; width:100%; margin-top:1rem;">生成可行性简报</button>
         </div>
-        <button class="btn btn-primary" id="generate-summary-btn" style="display:none; width:100%; margin-top:1rem;">生成可行性简报</button>
+
+        <footer>
+          <p>© 2026 WEISUANDI · weisuandi.com · 月球基地畅想项目</p>
+        </footer>
       </div>
-    </aside>
+
+      <aside class="plan-right">
+        <!-- Stats Dashboard (now standalone in right column) -->
+        <div class="stats-dashboard hidden" id="stats-board"></div>
+      </aside>
+    </div>
   </main>
 
   <!-- Result Modal -->
