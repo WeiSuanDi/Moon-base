@@ -76,10 +76,13 @@
       updateStats();
 
       // 注册清理函数（导航离开时由 navigator.js 调用）
-      window.__pageCleanup = function() {
-        if (intervalId) {
-          clearInterval(intervalId);
-          intervalId = null;
+      window.__pageModules = window.__pageModules || {};
+      window.__pageModules["data"] = {
+        cleanup: function() {
+          if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
         }
       };
     })();

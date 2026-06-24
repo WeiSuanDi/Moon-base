@@ -28,6 +28,8 @@ function cleanup() {
   }
 }
 
-// 注册页面生命周期（由 navigator.js 调用）
-window.__pageInit = init;
-window.__pageCleanup = cleanup;
+// 注册页面生命周期（由 navigator.js 通过 window.__pageModules 调用）
+// 使用注册表而非 window.__pageInit 是因为 ES 模块只执行一次，
+// 返回已访问页面时模块不会重新执行，需要从注册表查找 init/cleanup
+window.__pageModules = window.__pageModules || {};
+window.__pageModules["index"] = { init: init, cleanup: cleanup };

@@ -151,9 +151,9 @@ function cleanup() {
   isGenerating = false;
 }
 
-// 注册页面生命周期（由 navigator.js 调用）
-window.__pageInit = init;
-window.__pageCleanup = cleanup;
+// 注册页面生命周期（由 navigator.js 通过 window.__pageModules 调用）
+window.__pageModules = window.__pageModules || {};
+window.__pageModules["plan"] = { init: init, cleanup: cleanup };
 
 // 优先使用 URL 参数中的选址；其次保留已有 state；否则提示返回首页
 function resolveSiteFromUrl() {
@@ -488,5 +488,3 @@ async function sendChat() {
     if (chatSend) chatSend.disabled = false;
   }
 }
-
-// 注意：不在此处自动初始化，navigator.js 会在模块加载完毕后调用 window.__pageInit()

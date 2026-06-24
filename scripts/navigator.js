@@ -6,7 +6,20 @@
   if (window.__moonNavigator) return;
   window.__moonNavigator = true;
 
+  // 页面模块注册表：每个模块脚本在此注册 { init, cleanup }
+  // 因为 ES 模块只执行一次，用注册表确保返回已访问页面时能正确调用 init
+  window.__pageModules = window.__pageModules || {};
+
   var isNavigating = false;
+
+  // ——— 工具：从 URL 提取页面名 ———
+  function getPageName(url) {
+    var path = new URL(url, location.origin).pathname;
+    var name = path.split("/").pop().replace(".html", "") || "index";
+    // 首页可能是 "" 或 "index"
+    if (name === "" || path === "/" || path === "") name = "index";
+    return name;
+  }
 
   // ——— 判断是否为内部 HTML 链接 ———
   function isInternalHtmlLink(a) {
@@ -80,46 +93,35 @@
   // 异步注入脚本，等待模块加载完成
   function injectScriptsAsync(scripts) {
     return new Promise(function (resolve) {
-      // 排序：importmap → module → 其他
       var ordered = [];
       ordered = ordered.concat(scripts.filter(function (s) { return s.type === "importmap"; }));
       ordered = ordered.concat(scripts.filter(function (s) { return s.type === "module"; }));
       ordered = ordered.concat(scripts.filter(function (s) { return s.type !== "importmap" && s.type !== "module"; }));
 
-      var pending = 0;
+      ordered = ordered.filter(function (s) { return !isSkippedScript(s); });
+
+      var asyncScripts = ordered.filter(function (s) { return s.src && s.type === "module"; });
+      var pending = asyncScripts.length;
 
       function checkDone() {
         pending--;
         if (pending <= 0) {
-          // 给模块代码体一点执行时间
           setTimeout(resolve, 20);
         }
       }
 
-      // 过滤掉需要跳过的脚本
-      ordered = ordered.filter(function (s) { return !isSkippedScript(s); });
-
-      // 计算需要等待的异步脚本数
-      var asyncScripts = ordered.filter(function (s) { return s.src && s.type === "module"; });
-      pending = asyncScripts.length;
-
       if (pending === 0) {
-        // 全同步，直接注入
-        ordered.forEach(function (s) {
-          appendScript(s);
-        });
+        ordered.forEach(function (s) { appendScript(s); });
         resolve();
         return;
       }
 
-      // 先注入非模块脚本（同步执行）
       ordered.forEach(function (s) {
         if (!s.src || s.type !== "module") {
           appendScript(s);
         }
       });
 
-      // 再注入模块脚本（需要等待加载）
       ordered.forEach(function (s) {
         if (s.src && s.type === "module") {
           appendScript(s, checkDone);
@@ -144,17 +146,35 @@
     document.body.appendChild(el);
   }
 
+  // ——— 获取页面注册的模块 ———
+  function getPageModule(pageName) {
+    return window.__pageModules && window.__pageModules[pageName];
+  }
+
+  // ——— 调用页面清理 ———
+  function callCleanup(pageName) {
+    var mod = getPageModule(pageName);
+    if (mod && typeof mod.cleanup === "function") {
+      try { mod.cleanup(); } catch (e) { console.warn("页面清理失败：", e); }
+    }
+  }
+
+  // ——— 调用页面初始化 ———
+  function callInit(pageName) {
+    var mod = getPageModule(pageName);
+    if (mod && typeof mod.init === "function") {
+      try { mod.init(); } catch (e) { console.warn("页面初始化失败：", e); }
+    }
+  }
+
   // ——— 核心：导航到指定 URL ———
   async function navigateTo(url, addToHistory) {
     if (isNavigating) return;
     isNavigating = true;
 
     // 1. 调用旧页面的清理函数
-    if (typeof window.__pageCleanup === "function") {
-      try { window.__pageCleanup(); } catch (e) { console.warn("页面清理失败：", e); }
-    }
-    delete window.__pageInit;
-    delete window.__pageCleanup;
+    var oldPage = getPageName(window.__currentPage);
+    callCleanup(oldPage);
 
     try {
       // 2. 获取目标页面
@@ -199,10 +219,9 @@
       // 13. 滚动到顶部
       window.scrollTo(0, 0);
 
-      // 14. 调用新页面的初始化函数
-      if (typeof window.__pageInit === "function") {
-        try { window.__pageInit(); } catch (e) { console.warn("页面初始化失败：", e); }
-      }
+      // 14. 调用新页面的初始化函数（从注册表查找，解决 ES 模块缓存问题）
+      var newPage = getPageName(url);
+      callInit(newPage);
     } catch (err) {
       console.error("导航失败，使用完整页面跳转：", err);
       window.location.href = url;
@@ -241,10 +260,9 @@
 
   // ——— 初始页面加载：等模块加载完毕后调用 init ———
   function scheduleInit() {
+    var pageName = getPageName(location.href);
     setTimeout(function () {
-      if (typeof window.__pageInit === "function") {
-        try { window.__pageInit(); } catch (e) { console.warn("初始页面初始化失败：", e); }
-      }
+      callInit(pageName);
     }, 80);
   }
 
